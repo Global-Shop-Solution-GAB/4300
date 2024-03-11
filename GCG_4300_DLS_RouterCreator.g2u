@@ -1,0 +1,118 @@
+Program.Sub.Preflight.Start
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+'opening connection
+F.ODBC.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+
+f.Intrinsic.Control.If(v.Caller.Hook,=,"11110")
+	'call the router select
+	f.Intrinsic.Control.CallSub(routerselect)
+f.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4300_DLS_RouterCreator.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	f.Intrinsic.Control.CallSub(unload)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Main.End
+
+Program.Sub.Unload.Start
+F.Intrinsic.Control.SetErrorHandler("Unload_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+'closing connection and ending program
+F.ODBC.Connection!conx.Close
+Function.Intrinsic.Control.End
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Unload_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4300_DLS_RouterCreator.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	f.Intrinsic.Control.End
+
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Unload.End
+
+Program.Sub.RouterSelect.Start
+F.Intrinsic.Control.SetErrorHandler("RouterSelect_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+v.Local.srouter.Declare(string)
+v.Local.screator.Declare(string)
+v.Local.ssql.Declare(string)
+V.Local.sRev.Declare(String)
+
+'set the local variables
+F.Intrinsic.String.RPad(V.Passed.000014," ",17,V.Local.srouter)
+F.Intrinsic.String.LPad(V.Passed.000015," ",3,V.Local.sRev)
+F.Intrinsic.String.Build("{0}{1}",V.Local.srouter,v.Local.sRev,V.Local.srouter)
+
+'set the created by label on the screen
+V.Passed.GAB-LBL-1.Set("Created By: ")
+F.Intrinsic.Variable.SetProperty("GAB-LBL-1","PL",320)
+F.Intrinsic.Variable.SetProperty("GAB-LBL-1","PT",175)
+F.Intrinsic.Variable.SetProperty("GAB-LBL-1","PW",60)
+F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-LBL-1,"HIDE",0)
+V.Passed.GAB-LBL-2.Set("")
+
+'query for the creator
+f.Intrinsic.String.build("Select Top 1 CHANGE_USER from V_ROUTER_CHANGES where ACTION = '{0}' and ROUTER = '{1}' and CHANGE_USER <> '{2}' order by DATE_CHG asc","A",v.local.srouter.trim,"",v.local.ssql)
+
+F.ODBC.Connection!conX.OpenRecordsetRO("rst",V.Local.sSql)
+'if a creator is found set the local variable as the employee number
+F.Intrinsic.Control.If(V.Odbc.conX!rst.EOF,=,False)
+	'set the creator variable
+	v.Local.screator.Set(v.ODBC.conx!rst.FieldValTrim!CHANGE_USER)
+f.Intrinsic.Control.EndIf
+'close connection
+f.ODBC.conx!rst.Close
+
+'if the creator variable is not blank we will query for the creators name
+f.Intrinsic.Control.If(v.Local.screator.Trim,<>,"")
+	'get the user's name
+	Function.Global.Security.GetFullName(v.Local.screator,v.Local.screator)
+		'set the label for the creator
+		V.Passed.GAB-LBL-2.Set(v.Local.screator)
+		F.Intrinsic.Variable.SetProperty("GAB-LBL-2","PL",385)
+		F.Intrinsic.Variable.SetProperty("GAB-LBL-2","PT",175)
+		F.Intrinsic.Variable.SetProperty("GAB-LBL-2","PW",95)
+		F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-LBL-2,"HIDE",0)
+f.Intrinsic.Control.EndIf
+
+'call the unload sub
+f.Intrinsic.Control.CallSub(unload)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("RouterSelect_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4300_DLS_RouterCreator.g2u",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	f.Intrinsic.Control.CallSub(unload)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.RouterSelect.End
+
+Program.Sub.Comments.Start
+${$0$}$$}$WAW$}$11/29/2016 1:37:39 PM$}$False
+Program.Sub.Comments.End
